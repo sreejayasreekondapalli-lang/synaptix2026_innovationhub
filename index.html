@@ -2,43 +2,308 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Study Tracker</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Study Tracker App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f3f7ff;
+        }
+        .container {
+            width: 400px;
+            background: white;
+            padding: 20px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px gray;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background: #aed1ff;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .reminder-box {
+            padding: 10px;
+            background: #fff4b4;
+            border-left: 5px solid #ffcc00;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+    </style>
 </head>
+
 <body>
 
-    <h1>📚 Student Study Tracker</h1>
+<div class="container" id="loginBox">
+    <h2>Student Login</h2>
+    <input type="email" id="loginEmail" placeholder="Enter Email ID">
+    <button onclick="login()">Login</button>
+</div>
 
-    <div class="container">
-        <h2>Add Subject</h2>
+<div class="container" id="appBox" style="display:none;">
+    <h2>Study Tracker</h2>
 
-        <label>Subject Name:</label>
-        <input type="text" id="subjectName">
-
-        <label>Difficulty:</label>
-        <select id="difficulty">
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-        </select>
-
-        <label>Exam Date:</label>
-        <input type="date" id="examDate">
-
-        <button onclick="addSubject()">Add Subject</button>
+    <div class="reminder-box" id="reminderBox">
+        Loading reminder...
     </div>
 
-    <h2>📅 Generated Study Timetable</h2>
-    <table id="timetable">
+    <h3>Set Daily Reminder Time</h3>
+    <input type="time" id="reminderTime">
+    <button onclick="saveReminderTime()">Save Reminder Time</button>
+
+    <h3>Add Subject</hh3>
+    <input type="text" id="subjectName" placeholder="Subject Name">
+
+    <select id="difficulty">
+        <option value="1">Easy (1 hr)</option>
+        <option value="2">Medium (2 hrs)</option>
+        <option value="3">Hard (3 hrs)</option>
+    </select>
+
+    <label>Exam Date</label>
+    <input type="date" id="examDate">
+
+    <button onclick="addSubject()">Add to Time Table</button>
+
+    <h3>Your Time Table</h3>
+    <table id="tableData">
         <tr>
             <th>Subject</th>
-            <th>Difficulty</th>
-            <th>Total Hours Required</th>
-            <th>Hours per Day</th>
+            <th>Hours Needed</th>
             <th>Days Left</th>
+            <th>Exam Date</th>
+            <th>Delete</th>
         </tr>
     </table>
 
-<script src="script.js"></script>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+
+let currentUser = "";
+
+// LOGIN FUNCTION
+function login() {
+    let email = document.getElementById("loginEmail").value.trim();
+
+    if (email === "") {
+        alert("Enter a valid email");
+        return;
+    }
+
+    currentUser = email;
+    localStorage.setItem("loggedUser", email);
+
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("appBox").style.display = "block";
+
+    loadTable();
+    updateReminder();
+    loadReminderTime();
+    requestNotificationPermission();
+}
+
+// LOGOUT
+function logout() {
+    localStorage.removeItem("loggedUser");
+    location.reload();
+}
+
+// ADD SUBJECT FUNCTION
+function addSubject() {
+    let name = document.getElementById("subjectName").value;
+    let difficulty = document.getElementById("difficulty").value;
+    let examDate = document.getElementById("examDate").value;
+
+    if (name === "" || examDate === "") {
+        alert("Fill all fields!");
+        return;
+    }
+
+    let hours = parseInt(difficulty);
+    let today = new Date();
+    let exam = new Date(examDate);
+    let daysLeft = Math.ceil((exam - today) / (1000 * 60 * 60 * 24));
+
+    if (daysLeft < 0) daysLeft = 0;
+
+    let subject = {
+        name: name,
+        hours: hours,
+        examDate: examDate,
+        daysLeft: daysLeft
+    };
+
+    let data = JSON.parse(localStorage.getItem(currentUser)) || [];
+    data.push(subject);
+    localStorage.setItem(currentUser, JSON.stringify(data));
+
+    loadTable();
+    updateReminder();
+}
+
+// LOAD TIMETABLE
+function loadTable() {
+    let table = document.getElementById("tableData");
+    table.innerHTML = `
+        <tr>
+            <th>Subject</th>
+            <th>Hours Needed</th>
+            <th>Days Left</th>
+            <th>Exam Date</th>
+            <th>Delete</th>
+        </tr>`;
+
+    let data = JSON.parse(localStorage.getItem(currentUser)) || [];
+
+    data.forEach((s, index) => {
+        table.innerHTML += `
+            <tr>
+                <td>${s.name}</td>
+                <td>${s.hours} hrs</td>
+                <td>${s.daysLeft}</td>
+                <td>${s.examDate}</td>
+                <td><button class="delete-btn" onclick="deleteSubject(${index})">X</button></td>
+            </tr>`;
+    });
+}
+
+// DELETE SUBJECT
+function deleteSubject(index) {
+    let data = JSON.parse(localStorage.getItem(currentUser)) || [];
+    data.splice(index, 1);
+    localStorage.setItem(currentUser, JSON.stringify(data));
+
+    loadTable();
+    updateReminder();
+}
+
+// SMART REMINDER SYSTEM
+function updateReminder() {
+    let data = JSON.parse(localStorage.getItem(currentUser)) || [];
+
+    if (data.length === 0) {
+        document.getElementById("reminderBox").innerHTML =
+            "📢 No subjects added yet. Add a subject to get reminders.";
+        return;
+    }
+
+    data.sort((a, b) => a.daysLeft - b.daysLeft);
+
+    let urgent = data[0];
+    let msg = "";
+
+    if (urgent.daysLeft <= 0) {
+        msg = `⚠️ Your exam for <b>${urgent.name}</b> is today! Revise for at least <b>${urgent.hours} hours</b>.`;
+    } 
+    else if (urgent.daysLeft <= 3) {
+        msg = `🔥 Only <b>${urgent.daysLeft} days</b> left for <b>${urgent.name}</b> exam!  
+               Study minimum <b>${urgent.hours} hours</b> today.`;
+    } 
+    else {
+        msg = `📘 Today's Study Plan:<br>
+               Study <b>${urgent.name}</b> for <b>${urgent.hours} hours</b>.<br>
+               (${urgent.daysLeft} days left for exam)`;
+    }
+
+    document.getElementById("reminderBox").innerHTML = msg;
+}
+
+// SAVE DAILY REMINDER TIME
+function saveReminderTime() {
+    let time = document.getElementById("reminderTime").value;
+    if (time === "") {
+        alert("Please select a time");
+        return;
+    }
+    localStorage.setItem(currentUser + "_reminderTime", time);
+    alert("Daily reminder time saved!");
+}
+
+// LOAD SAVED REMINDER TIME
+function loadReminderTime() {
+    let time = localStorage.getItem(currentUser + "_reminderTime");
+    if (time) {
+        document.getElementById("reminderTime").value = time;
+    }
+}
+
+// -----------------------
+// NOTIFICATION SYSTEM
+// -----------------------
+function requestNotificationPermission() {
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+}
+
+function sendNotification(message) {
+    if (Notification.permission === "granted") {
+        navigator.serviceWorker.getRegistration().then(reg => {
+            reg.showNotification("Study Reminder", {
+                body: message,
+                icon: "https://cdn-icons-png.flaticon.com/512/906/906344.png"
+            });
+        });
+    }
+}
+
+// CHECK EVERY MINUTE FOR REMINDER
+setInterval(() => {
+    let time = localStorage.getItem(currentUser + "_reminderTime");
+    if (!time) return;
+
+    let now = new Date();
+    let currentTime =
+        String(now.getHours()).padStart(2, '0') + ":" +
+        String(now.getMinutes()).padStart(2, '0');
+
+    if (time === currentTime) {
+        sendNotification("⏰ It's time to study! Open your study planner.");
+    }
+}, 60000);
+
+// REGISTER SERVICE WORKER
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+}
+
+// AUTO LOGIN
+window.onload = () => {
+    let savedUser = localStorage.getItem("loggedUser");
+    if (savedUser) {
+        currentUser = savedUser;
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("appBox").style.display = "block";
+        loadTable();
+        updateReminder();
+        loadReminderTime();
+        requestNotificationPermission();
+    }
+};
+
+</script>
+
 </body>
 </html>

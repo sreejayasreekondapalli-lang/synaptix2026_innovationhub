@@ -1,0 +1,33 @@
+<
+<script>
+let user = localStorage.getItem("currentUser");
+let subjects = JSON.parse(localStorage.getItem(user + "_subjects")) || [];
+
+function addSubject() {
+    let s = document.getElementById("subject").value;
+    let d = document.getElementById("difficulty").value;
+
+    if (s.trim() === "") {
+        alert("Enter a subject name");
+        return;
+    }
+
+    subjects.push({ name: s, difficulty: d });
+    localStorage.setItem(user + "_subjects", JSON.stringify(subjects));
+    showList();
+}
+
+function showList() {
+    document.getElementById("list").innerHTML = "";
+    subjects.forEach(sub => {
+        let li = document.createElement("li");
+        li.textContent = sub.name + " (" + sub.difficulty + ")";
+        document.getElementById("list").appendChild(li);
+    });
+}
+
+showList();
+</script>
+
+</body>
+</html>

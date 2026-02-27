@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Study Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+    <h2>Dashboard</h2>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+    <h3>Welcome, <span id="userEmail"></span></h3>
+
+    <button onclick="window.location.href='subjects.html'">Add Subjects</button>
+    <button onclick="window.location.href='timetable.html'">View Timetable</button>
+
+    <h2>Your Saved Timetable</h2>
+    <table id="savedTable"></table>
+</div>
+
+<script>
+let user = localStorage.getItem("currentUser");
+document.getElementById("userEmail").textContent = user;
+
+let data = JSON.parse(localStorage.getItem(user + "_subjects"));
+let table = document.getElementById("savedTable");
+
+if (!data || data.length === 0) {
+    table.innerHTML = "<tr><td>No subjects added yet</td></tr>";
+} else {
+    table.innerHTML = `
+        <tr>
+            <th>Subject</th>
+            <th>Difficulty</th>
+            <th>Hours/day</th>
+            <th>Exam Date</th>
+        </tr>
+    `;
+
+    data.forEach(row => {
+        table.innerHTML += `
+            <tr>
+                <td>${row.name}</td>
+                <td>${row.difficulty}</td>
+                <td>${row.hours}</td>
+                <td>${row.examDate}</td>
+            </tr>`;
+    });
+}
+
+function logout() {
+    localStorage.removeItem("currentUser");
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

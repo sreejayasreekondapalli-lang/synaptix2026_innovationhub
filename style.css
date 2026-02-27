@@ -1,50 +1,59 @@
-bbody {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    padding: 20px;
-}
-
-h1 {
-    text-align: center;
+body {
+    font-family: Arial;
+    background: #e9f2ff;
+    margin: 0;
 }
 
 .container {
-    background: white;
-    padding: 20px;
-    width: 350px;
+    width: 90%;
+    max-width: 400px;
     margin: auto;
+    margin-top: 40px;
+    padding: 20px;
+    background: white;
     border-radius: 10px;
-    box-shadow: 0 0 10px #ccc;
+    text-align: center;
+    box-shadow: 0px 0px 10px #90bfff;
 }
 
-input, select {
+input, select, button {
     width: 100%;
-    padding: 8px;
-    margin: 6px 0;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #007bff;
 }
 
 button {
-    background: #0084ff;
+    background: #007bff;
     color: white;
-    padding: 10px;
-    width: 100%;
-    border: none;
-    margin-top: 10px;
-    border-radius: 5px;
+    cursor: pointer;
+}
+button:hover {
+    background: #005fcc;
 }
 
+.nav {
+    background: #007bff;
+    padding: 15px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Table Styling */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    background: white;
-}
-
-table, th, td {
-    border: 1px solid #999;
 }
 
 th, td {
     padding: 10px;
-    text-align: center;
+    border: 1px solid #007bff;
+}
+
+th {
+    background: #007bff;
+    color: white;
 }
